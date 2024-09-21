@@ -1,29 +1,47 @@
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 import joblib
 
-# TODO: Load the dataset (you can use a sample materials dataset or create a mock one)
-# data = pd.read_csv('materials_data.csv')
+# Create a mock materials dataset
+np.random.seed(42)
+n_samples = 1000
+
+data = pd.DataFrame({
+    'composition_A': np.random.uniform(0, 1, n_samples),
+    'composition_B': np.random.uniform(0, 1, n_samples),
+    'processing_temp': np.random.uniform(500, 1500, n_samples),
+    'processing_time': np.random.uniform(1, 10, n_samples),
+    'hardness': np.random.uniform(100, 1000, n_samples)
+})
+
+# Adjust hardness based on features to create a relationship
+data['hardness'] += (data['composition_A'] * 200 + 
+                     data['composition_B'] * 100 + 
+                     data['processing_temp'] * 0.1 + 
+                     data['processing_time'] * 10)
+
+# Save the dataset for reference
+data.to_csv('materials_data.csv', index=False)
+
+# TODO: Load the dataset from the CSV file
+# Hint: Use pd.read_csv()
 
 # TODO: Prepare features (X) and target (y)
-# X = data[['feature1', 'feature2', 'feature3']]
-# y = data['target_property']
+# Hint: Select appropriate columns for X and y
 
 # TODO: Split the data into training and testing sets
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Hint: Use train_test_split function
 
 # TODO: Create and train the model
-# model = RandomForestRegressor(n_estimators=100, random_state=42)
-# model.fit(X_train, y_train)
+# Hint: Initialize RandomForestRegressor and use its fit method
 
 # TODO: Evaluate the model
-# y_pred = model.predict(X_test)
-# mse = mean_squared_error(y_test, y_pred)
-# print(f"Mean Squared Error: {mse}")
+# Hint: Use the model to predict on X_test and calculate mean squared error
 
 # TODO: Save the model
-# joblib.dump(model, 'material_property_model.joblib')
+# Hint: Use joblib.dump()
 
 print("Model training completed and saved.")
