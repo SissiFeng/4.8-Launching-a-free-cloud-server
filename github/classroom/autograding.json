@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "name": "Check Submission",
+      "setup": "",
+      "run": "python check_submission.py",
+      "input": "",
+      "output": "",
+      "comparison": "included",
+      "timeout": 10,
+      "points": 100
+    }
+  ]
+}
