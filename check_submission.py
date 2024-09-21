@@ -1,75 +1,56 @@
 import os
-import sys
-import subprocess
-import importlib.util
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+import joblib
 
-def check_file_exists(filename):
-    return os.path.exists(filename)
+def check_model_file():
+    assert os.path.exists('material_property_model.joblib'), "Model file not found"
+    print("✅ Model file exists")
 
-def check_branch_exists(branch_name):
-    result = subprocess.run(['git', 'branch', '--list', branch_name], capture_output=True, text=True)
-    return branch_name in result.stdout
+def check_data_loading():
+    assert os.path.exists('materials_data.csv'), "Data file not found"
+    data = pd.read_csv('materials_data.csv')
+    assert len(data) == 1000, f"Expected 1000 samples, but found {len(data)}"
+    assert set(data.columns) == {'composition_A', 'composition_B', 'processing_temp', 'processing_time', 'hardness'}, "Incorrect columns in the dataset"
+    print("✅ Data loading check passed")
 
-def check_pull_request():
-    # This is a simplified check. In a real scenario, you'd use GitHub API.
-    return os.path.exists('.git/PULL_REQUEST_MSGNUM')
-
-def check_merge_conflict_resolved():
-    result = subprocess.run(['git', 'diff', '--name-only', '--diff-filter=U'], capture_output=True, text=True)
-    return result.stdout.strip() == ''
-
-def check_readme_updated():
-    with open('README.md', 'r') as f:
-        content = f.read()
-    return 'New Feature' in content or 'new feature' in content
-
-def check_project_board():
-    # This is a simplified check. In a real scenario, you'd use GitHub API.
-    return os.path.exists('.github/projects/1')
-
-def check_game_implementation():
-    spec = importlib.util.spec_from_file_location("snake_game", "src/snake_game.py")
-    snake_game = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(snake_game)
+def check_model_performance():
+    data = pd.read_csv('materials_data.csv')
+    X = data[['composition_A', 'composition_B', 'processing_temp', 'processing_time']]
+    y = data['hardness']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    game = snake_game.SnakeGame()
+    model = joblib.load('material_property_model.joblib')
+    y_pred = model.predict(X_test)
+    mse = mean_squared_error(y_test, y_pred)
     
-    # Check if key methods are implemented
-    methods_to_check = ['move_snake', 'change_direction', 'is_collision', 'update', 'draw']
-    for method in methods_to_check:
-        if getattr(game, method).__code__.co_code == b'd\x00S\x00':
-            print(f"Method {method} is not implemented.")
-            return False
-    
-    # Run the game for a few steps to check basic functionality
-    for _ in range(10):
-        game.update()
-    
-    return game.score >= 0 and len(game.snake) > 0
+    assert mse < 10000, f"Model performance is poor. MSE: {mse}"
+    print(f"✅ Model performance check passed. MSE: {mse:.2f}")
+
+def check_model_prediction():
+    model = joblib.load('material_property_model.joblib')
+    test_data = pd.DataFrame({
+        'composition_A': [0.5, 0.3, 0.7],
+        'composition_B': [0.5, 0.7, 0.3],
+        'processing_temp': [1000, 800, 1200],
+        'processing_time': [5, 3, 7]
+    })
+    predictions = model.predict(test_data)
+    assert all(100 <= pred <= 1500 for pred in predictions), "Predictions out of expected range"
+    print("✅ Model prediction check passed")
 
 def main():
-    checks = {
-        "Snake game file exists": check_file_exists("src/snake_game.py"),
-        "Feature branch exists": check_branch_exists("feature/new-feature"),
-        "Pull request created": check_pull_request(),
-        "Merge conflicts resolved": check_merge_conflict_resolved(),
-        "README.md updated": check_readme_updated(),
-        "Project board created": check_project_board(),
-        "Game implementation": check_game_implementation()
-    }
-
-    all_passed = True
-    for check, result in checks.items():
-        status = "Passed" if result else "Failed"
-        print(f"{check}: {status}")
-        if not result:
-            all_passed = False
-
-    if all_passed:
-        print("\nCongratulations! All checks passed.")
-    else:
-        print("\nSome checks failed. Please review and try again.")
-        sys.exit(1)
+    try:
+        check_model_file()
+        check_data_loading()
+        check_model_performance()
+        check_model_prediction()
+        print("\n🎉 All checks passed! Your submission looks good!")
+    except AssertionError as e:
+        print(f"\n❌ Check failed: {str(e)}")
+        print("Please review your code and try again.")
 
 if __name__ == "__main__":
     main()
